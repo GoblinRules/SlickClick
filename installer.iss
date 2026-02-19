@@ -2,9 +2,9 @@
 ; Compile with Inno Setup 6.x
 
 #define MyAppName "SlickClick"
-#define MyAppVersion "1.1.0"
+#define MyAppVersion "1.2.2"
 #define MyAppPublisher "SlickClick"
-#define MyAppURL "https://github.com/slickclick"
+#define MyAppURL "https://github.com/GoblinRules/SlickClick"
 #define MyAppExeName "SlickClick.exe"
 
 [Setup]
@@ -15,6 +15,10 @@ AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
+VersionInfoVersion={#MyAppVersion}.0
+VersionInfoDescription=SlickClick - Automatic Mouse Clicker
+VersionInfoProductName={#MyAppName}
+VersionInfoProductVersion={#MyAppVersion}.0
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes

@@ -36,6 +36,8 @@ class SlickClickGUI:
         self.target_mode = tk.StringVar(value="cursor")
         self._locations: list[tuple[int, int]] = []
         self._hotkey_name = DEFAULT_HOTKEY
+        self.show_toast = tk.BooleanVar(value=True)
+        self.show_osd = tk.BooleanVar(value=True)
 
         # Display var for the inline repeat combo
         self._repeat_display_var = tk.StringVar(value="Until Stopped")
@@ -155,6 +157,7 @@ class SlickClickGUI:
         menu.add_command(label="  🗑  Clear Locations", command=lambda: self._on_clear_locations())
         menu.add_separator()
         menu.add_command(label="  ⚙  Settings...", command=self._open_settings)
+        menu.add_command(label="  📖  Help / Guide", command=self._show_help)
         menu.add_command(label="  ℹ  About", command=self._show_about)
         menu.add_separator()
         menu.add_command(label="  ✕  Exit", command=lambda: self._on_close())
@@ -508,7 +511,7 @@ class SlickClickGUI:
     # ------------------------------------------------------------------
 
     def _open_settings(self):
-        dlg = self._make_dialog("Settings", 300, 160)
+        dlg = self._make_dialog("Settings", 300, 240)
 
         body = tk.Frame(dlg, bg=COLORS["bg_card"])
         body.pack(fill="both", expand=True, padx=16, pady=12)
@@ -557,15 +560,130 @@ class SlickClickGUI:
             selectcolor=COLORS["input_bg"], activebackground=COLORS["bg_card"],
         ).pack(side="left")
 
+        # Notification toggles
+        notif_frame = tk.Frame(body, bg=COLORS["bg_card"])
+        notif_frame.pack(fill="x", pady=(4, 4))
+
+        tk.Checkbutton(
+            notif_frame, text="Show toast notifications",
+            variable=self.show_toast,
+            font=("Segoe UI", 9), fg=COLORS["text_secondary"], bg=COLORS["bg_card"],
+            selectcolor=COLORS["input_bg"], activebackground=COLORS["bg_card"],
+        ).pack(anchor="w")
+
+        tk.Checkbutton(
+            notif_frame, text="Show on-screen indicator",
+            variable=self.show_osd,
+            font=("Segoe UI", 9), fg=COLORS["text_secondary"], bg=COLORS["bg_card"],
+            selectcolor=COLORS["input_bg"], activebackground=COLORS["bg_card"],
+        ).pack(anchor="w")
+
         # OK / Cancel
         self._make_dialog_buttons(dlg, body, on_ok=lambda: dlg.destroy())
+
+    # ------------------------------------------------------------------
+    # Help / Guide dialog
+    # ------------------------------------------------------------------
+
+    def _show_help(self):
+        dlg = self._make_dialog("Help — User Guide", 400, 420)
+
+        body = tk.Frame(dlg, bg=COLORS["bg_card"])
+        body.pack(fill="both", expand=True, padx=0, pady=0)
+
+        # Scrollable canvas
+        canvas = tk.Canvas(body, bg=COLORS["bg_card"], highlightthickness=0)
+        scrollbar = tk.Scrollbar(body, orient="vertical", command=canvas.yview)
+        scroll_frame = tk.Frame(canvas, bg=COLORS["bg_card"])
+
+        scroll_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        canvas.create_window((0, 0), window=scroll_frame, anchor="nw", width=380)
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Mouse wheel scrolling
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        scrollbar.pack(side="right", fill="y")
+        canvas.pack(side="left", fill="both", expand=True, padx=8, pady=8)
+
+        # Helper to add sections
+        def section(title):
+            tk.Label(scroll_frame, text=title, font=("Segoe UI", 11, "bold"),
+                     fg=COLORS["accent"], bg=COLORS["bg_card"],
+                     anchor="w").pack(fill="x", pady=(12, 2), padx=8)
+
+        def text(content):
+            tk.Label(scroll_frame, text=content, font=("Segoe UI", 9),
+                     fg=COLORS["text_secondary"], bg=COLORS["bg_card"],
+                     anchor="w", justify="left", wraplength=350).pack(fill="x", padx=16, pady=(0, 4))
+
+        # Content
+        section("Getting Started")
+        text("SlickClick is an automatic mouse clicker for Windows. "
+             "Press the Start button or your hotkey to begin auto-clicking at the configured interval.")
+
+        section("Hotkey")
+        text("The default hotkey is F6. You can change it in Settings → Change. "
+             "Press any key on your keyboard to assign it as the new toggle hotkey. "
+             "Your hotkey choice is saved automatically.")
+
+        section("Click Interval")
+        text("Set the interval between clicks using Hours, Minutes, Seconds, and Milliseconds fields in the main window. "
+             "The default is 100ms (10 clicks/second).")
+
+        section("Click Options (⚡ Click Options)")
+        text("Configure the mouse button (Left, Right, Middle) and click type "
+             "(Single, Double, Triple). You can also freeze the pointer position for single clicks.")
+
+        section("Repeat Mode (🔁 Repeat Options)")
+        text("Choose 'Repeat until stopped' for infinite clicking, "
+             "or set a specific number of clicks. The clicker will stop automatically after the count is reached.")
+
+        section("Location Targeting (📍 Pick Locations)")
+        text("By default, clicks happen at the current cursor position. "
+             "Use Pick Locations to save specific screen coordinates. "
+             "The clicker will cycle through saved locations. "
+             "Press Space to capture, Ctrl+Z to undo, Escape to finish.")
+
+        section("Dry Run Preview (▶)")
+        text("Visualize your saved click locations without actually clicking. "
+             "Numbered dots appear at each saved position.")
+
+        section("Toast Notifications & OSD")
+        text("When enabled in Settings, a toast notification appears when the clicker starts or stops. "
+             "An on-screen indicator (OSD) shows a small 'CLICKING' pill while the clicker is running. "
+             "Both can be toggled on or off in Settings.")
+
+        section("Check for Updates (ℹ About)")
+        text("Click 'Check for Updates' in the About dialog to check GitHub for newer versions. "
+             "If an update is available, click the link to download it.")
+
+        section("Settings Persistence")
+        text("All settings (hotkey, interval, click options, repeat mode, notification preferences) "
+             "are saved automatically to %APPDATA%\\SlickClick\\config.json "
+             "and restored on next launch.")
+
+        # Close button
+        tk.Button(
+            scroll_frame, text="Close", command=lambda: (canvas.unbind_all("<MouseWheel>"), dlg.destroy()),
+            font=("Segoe UI", 9), bg=COLORS["button_bg"], fg=COLORS["text_primary"],
+            activebackground=COLORS["button_hover"], relief="flat", padx=20, pady=3,
+        ).pack(pady=(12, 16))
 
     # ------------------------------------------------------------------
     # About dialog
     # ------------------------------------------------------------------
 
     def _show_about(self):
-        dlg = self._make_dialog("About SlickClick", 280, 150)
+        import webbrowser
+        from .updater import check_for_updates
+
+        dlg = self._make_dialog("About SlickClick", 280, 200)
 
         body = tk.Frame(dlg, bg=COLORS["bg_card"])
         body.pack(fill="both", expand=True, padx=16, pady=16)
@@ -576,6 +694,53 @@ class SlickClickGUI:
                  fg=COLORS["text_secondary"], bg=COLORS["bg_card"]).pack()
         tk.Label(body, text="Automatic Mouse Clicker", font=("Segoe UI", 9),
                  fg=COLORS["text_muted"], bg=COLORS["bg_card"]).pack(pady=(4, 0))
+
+        # Update check area
+        update_frame = tk.Frame(body, bg=COLORS["bg_card"])
+        update_frame.pack(fill="x", pady=(10, 0))
+
+        update_label = tk.Label(
+            update_frame, text="", font=("Segoe UI", 9),
+            fg=COLORS["text_muted"], bg=COLORS["bg_card"],
+        )
+
+        def _on_result(result):
+            def _apply():
+                if not dlg.winfo_exists():
+                    return
+                check_btn.configure(state="normal", text="Check for Updates")
+                if result.get("up_to_date"):
+                    update_label.configure(text="✓ You're up to date!", fg=COLORS["success"])
+                    update_label.pack(pady=(4, 0))
+                elif result.get("latest"):
+                    ver = result["latest"]
+                    url = result.get("url", "")
+                    update_label.configure(
+                        text=f"⬆ v{ver} available — click to download",
+                        fg=COLORS["accent"], cursor="hand2",
+                    )
+                    update_label.pack(pady=(4, 0))
+                    if url:
+                        update_label.bind("<Button-1>", lambda e: webbrowser.open(url))
+                else:
+                    update_label.configure(
+                        text="Could not check for updates", fg=COLORS["warning"],
+                    )
+                    update_label.pack(pady=(4, 0))
+            self.root.after(0, _apply)
+
+        def _check():
+            check_btn.configure(state="disabled", text="Checking...")
+            update_label.pack_forget()
+            check_for_updates(_on_result)
+
+        check_btn = tk.Button(
+            update_frame, text="Check for Updates", command=_check,
+            font=("Segoe UI", 9), bg=COLORS["button_bg"], fg=COLORS["text_primary"],
+            activebackground=COLORS["button_hover"], activeforeground=COLORS["text_primary"],
+            relief="flat", borderwidth=0, padx=12, pady=3,
+        )
+        check_btn.pack()
 
         tk.Button(
             body, text="OK", command=dlg.destroy,
@@ -589,23 +754,53 @@ class SlickClickGUI:
 
     def _make_dialog(self, title: str, width: int, height: int) -> tk.Toplevel:
         dlg = tk.Toplevel(self.root)
-        dlg.title(title)
-        dlg.geometry(f"{width}x{height}")
-        dlg.resizable(False, False)
+        dlg.overrideredirect(True)
+        dlg.attributes("-topmost", True)
         dlg.configure(bg=COLORS["bg_card"])
         dlg.transient(self.root)
         dlg.grab_set()
 
+        # Total height includes the 28px banner
+        total_h = height + 28
+
         # Center on parent
         dlg.update_idletasks()
         x = self.root.winfo_x() + (self.root.winfo_width() - width) // 2
-        y = self.root.winfo_y() + (self.root.winfo_height() - height) // 2
-        dlg.geometry(f"+{x}+{y}")
+        y = self.root.winfo_y() + (self.root.winfo_height() - total_h) // 2
+        dlg.geometry(f"{width}x{total_h}+{x}+{y}")
 
-        try:
-            dlg.iconbitmap(ICON_PATH)
-        except Exception:
-            pass
+        # Accent banner title bar (matches Pick Locations style)
+        title_bar = tk.Frame(dlg, bg=COLORS["accent"], height=28)
+        title_bar.pack(fill="x")
+        title_bar.pack_propagate(False)
+
+        title_lbl = tk.Label(
+            title_bar, text=f"⚡ {title}", font=("Segoe UI", 10, "bold"),
+            fg="white", bg=COLORS["accent"],
+        )
+        title_lbl.pack(side="left", padx=8)
+
+        close_btn = tk.Label(
+            title_bar, text="✕", font=("Segoe UI", 10, "bold"),
+            fg="white", bg=COLORS["accent"], cursor="hand2", padx=8,
+        )
+        close_btn.pack(side="right")
+        close_btn.bind("<Button-1>", lambda e: dlg.destroy())
+
+        # Make title bar draggable
+        def _start_drag(event):
+            dlg._drag_x = event.x
+            dlg._drag_y = event.y
+
+        def _do_drag(event):
+            nx = dlg.winfo_x() + event.x - dlg._drag_x
+            ny = dlg.winfo_y() + event.y - dlg._drag_y
+            dlg.geometry(f"+{nx}+{ny}")
+
+        title_bar.bind("<Button-1>", _start_drag)
+        title_bar.bind("<B1-Motion>", _do_drag)
+        title_lbl.bind("<Button-1>", _start_drag)
+        title_lbl.bind("<B1-Motion>", _do_drag)
 
         return dlg
 

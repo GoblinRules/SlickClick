@@ -8,6 +8,7 @@ from .gui import SlickClickGUI
 from .clicker import ClickerEngine
 from .hotkey import HotkeyListener
 from .location_picker import LocationPicker, DryRunPreview
+from .notifications import ToastNotification, OSDIndicator
 from . import config
 
 
@@ -21,6 +22,8 @@ class SlickClickApp:
         self.hotkey = HotkeyListener(on_toggle=self._toggle_clicking)
         self.picker = LocationPicker(self.root, on_location_picked=self._on_location_picked)
         self.dry_run = DryRunPreview(self.root)
+        self.toast = ToastNotification(self.root)
+        self.osd = OSDIndicator(self.root)
 
         # Wire callbacks
         self.engine.set_callbacks(
@@ -101,7 +104,22 @@ class SlickClickApp:
 
     def _on_status_change(self, running: bool):
         """Thread-safe status update."""
-        self.root.after(0, self.gui.update_status, running)
+        self.root.after(0, self._handle_status_change, running)
+
+    def _handle_status_change(self, running: bool):
+        """Update GUI, toast, and OSD on the main thread."""
+        self.gui.update_status(running)
+        # Toast notification
+        if self.gui.show_toast.get():
+            self.toast.show(running)
+        # OSD indicator
+        if self.gui.show_osd.get():
+            if running:
+                self.osd.show()
+            else:
+                self.osd.hide()
+        elif not running:
+            self.osd.hide()  # always hide when stopping
 
     def _on_click_count_update(self, count: int):
         """Thread-safe click count update (throttled)."""
@@ -182,6 +200,10 @@ class SlickClickApp:
         self.hotkey.set_hotkey(hotkey)
         self.gui.update_hotkey_display(hotkey)
 
+        # Notification preferences
+        self.gui.show_toast.set(cfg.get("show_toast", True))
+        self.gui.show_osd.set(cfg.get("show_osd", True))
+
     def _save_settings(self):
         """Gather current state from GUI and save."""
         try:
@@ -195,6 +217,8 @@ class SlickClickApp:
                 "click_type": self.gui.type_var.get(),
                 "repeat_mode": self.gui.repeat_mode.get(),
                 "repeat_count": int(self.gui.repeat_count_var.get() or 50),
+                "show_toast": self.gui.show_toast.get(),
+                "show_osd": self.gui.show_osd.get(),
             }
             config.save(cfg)
         except Exception:

@@ -19,6 +19,8 @@ DEFAULTS = {
     "click_type": "Single",
     "repeat_mode": "infinite",
     "repeat_count": 50,
+    "show_toast": True,
+    "show_osd": True,
 }
 
 
