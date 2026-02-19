@@ -758,7 +758,8 @@ class SlickClickGUI:
         dlg.attributes("-topmost", True)
         dlg.configure(bg=COLORS["bg_card"])
         dlg.transient(self.root)
-        dlg.grab_set()
+        dlg.lift()
+        dlg.focus_force()
 
         # Total height includes the 28px banner
         total_h = height + 28
