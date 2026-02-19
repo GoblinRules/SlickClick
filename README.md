@@ -43,7 +43,7 @@ python -m slickclick.main
 
 Pre-built binaries are available on the [Releases](https://github.com/GoblinRules/SlickClick/releases) page:
 
-- **SlickClick_Setup_v1.2.2.exe** — Windows installer
+- **SlickClick_Setup_v1.2.3.exe** — Windows installer
 - **SlickClick.exe** — Portable executable (no install needed)
 
 ## Usage
