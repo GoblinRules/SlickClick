@@ -1,0 +1,28 @@
+# Build artifacts
+dist/
+build/
+app/
+installer_output/
+*.spec.bak
+generate_icon.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Logs (user-specific, generated at runtime)
+*.log
