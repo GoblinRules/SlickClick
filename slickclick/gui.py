@@ -648,7 +648,7 @@ class SlickClickGUI:
         text("By default, clicks happen at the current cursor position. "
              "Use Pick Locations to save specific screen coordinates. "
              "The clicker will cycle through saved locations. "
-             "Press Space to capture, Ctrl+Z to undo, Escape to finish.")
+             "Click to capture, Ctrl+Z to undo, Escape to finish.")
 
         section("Dry Run Preview (▶)")
         text("Visualize your saved click locations without actually clicking. "
@@ -721,7 +721,7 @@ class SlickClickGUI:
                     )
                     update_label.pack(pady=(4, 0))
                     if url:
-                        update_label.bind("<Button-1>", lambda e: webbrowser.open(url))
+                        update_label.bind("<Button-1>", lambda e: (webbrowser.open(url), dlg.destroy()))
                 else:
                     update_label.configure(
                         text="Could not check for updates", fg=COLORS["warning"],

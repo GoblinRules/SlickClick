@@ -1,3 +1,4 @@
 pyautogui
 pynput
+pystray
 pyinstaller

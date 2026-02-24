@@ -2,7 +2,7 @@
 ; Compile with Inno Setup 6.x
 
 #define MyAppName "SlickClick"
-#define MyAppVersion "1.3.0"
+#define MyAppVersion "1.3.1"
 #define MyAppPublisher "SlickClick"
 #define MyAppURL "https://github.com/GoblinRules/SlickClick"
 #define MyAppExeName "SlickClick.exe"

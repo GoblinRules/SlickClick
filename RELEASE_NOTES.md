@@ -1,18 +1,22 @@
-# SlickClick v1.3.0 🚀
+# SlickClick v1.3.1 🚀
 
-**Click-to-pick location selection — no more spacebar!**
+**System tray support & About dialog polish.**
 
 ---
 
-## ✨ Improvement
+## ✨ New Features
 
-- **Click-to-pick locations** — The "Pick Locations" window now lets you simply **left-click** anywhere on screen to capture a position. No more moving the mouse then pressing Space — just click where you want. The floating toolbar stays interactive for dragging, closing, and undo (Ctrl+Z). Right-clicks are ignored.
+- **Minimize to System Tray** — Pressing the X button now shows a prompt asking "Minimize to Tray" or "Exit App". Minimizing hides the window and places a SlickClick icon in the system tray with Restore and Exit options.
+
+## 🐛 Fixes
+
+- **About dialog closes on download click** — Clicking "click to download" in the About → Check for Updates dialog now opens the browser and closes the About window automatically.
 
 ## 📦 Downloads
 
 | File | Description |
 |---|---|
-| `SlickClick_Setup_v1.3.0.exe` | Windows installer |
+| `SlickClick_Setup_v1.3.1.exe` | Windows installer |
 | `SlickClick.exe` | Portable executable (no install needed) |
 
 ### System Requirements
@@ -21,4 +25,4 @@
 
 ---
 
-**Full Changelog:** https://github.com/GoblinRules/SlickClick/compare/V1.2.3...V1.3.0
+**Full Changelog:** https://github.com/GoblinRules/SlickClick/compare/V1.3.0...V1.3.1

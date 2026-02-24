@@ -2,6 +2,7 @@
 
 import tkinter as tk
 import sys
+import threading
 
 from .logging_config import logger
 from .gui import SlickClickGUI
@@ -9,7 +10,15 @@ from .clicker import ClickerEngine
 from .hotkey import HotkeyListener
 from .location_picker import LocationPicker, DryRunPreview
 from .notifications import ToastNotification, OSDIndicator
+from .constants import COLORS, ICON_PATH
 from . import config
+
+try:
+    import pystray
+    from PIL import Image
+    _HAS_TRAY = True
+except ImportError:
+    _HAS_TRAY = False
 
 
 class SlickClickApp:
@@ -157,10 +166,112 @@ class SlickClickApp:
         self._save_settings()
 
     # ------------------------------------------------------------------
-    # Cleanup
+    # Close prompt and system tray
     # ------------------------------------------------------------------
 
     def _on_close(self):
+        """Show a dialog asking whether to minimize to tray or exit."""
+        dlg = tk.Toplevel(self.root)
+        dlg.overrideredirect(True)
+        dlg.attributes("-topmost", True)
+        dlg.configure(bg=COLORS["bg_card"])
+        dlg.transient(self.root)
+        dlg.lift()
+        dlg.focus_force()
+
+        width, height = 300, 140
+        dlg.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() - width) // 2
+        y = self.root.winfo_y() + (self.root.winfo_height() - height) // 2
+        dlg.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Accent banner
+        banner = tk.Frame(dlg, bg=COLORS["accent"], height=28)
+        banner.pack(fill="x")
+        banner.pack_propagate(False)
+        tk.Label(
+            banner, text="⚡ Close SlickClick", font=("Segoe UI", 10, "bold"),
+            fg="white", bg=COLORS["accent"],
+        ).pack(side="left", padx=8)
+        close_x = tk.Label(
+            banner, text="✕", font=("Segoe UI", 10, "bold"),
+            fg="white", bg=COLORS["accent"], cursor="hand2", padx=8,
+        )
+        close_x.pack(side="right")
+        close_x.bind("<Button-1>", lambda e: dlg.destroy())
+
+        body = tk.Frame(dlg, bg=COLORS["bg_card"])
+        body.pack(fill="both", expand=True, padx=16, pady=12)
+
+        tk.Label(
+            body, text="What would you like to do?",
+            font=("Segoe UI", 10), fg=COLORS["text_primary"], bg=COLORS["bg_card"],
+        ).pack(pady=(0, 12))
+
+        btn_frame = tk.Frame(body, bg=COLORS["bg_card"])
+        btn_frame.pack()
+
+        tk.Button(
+            btn_frame, text="🗕  Minimize to Tray",
+            command=lambda: (dlg.destroy(), self._minimize_to_tray()),
+            font=("Segoe UI", 9, "bold"), bg=COLORS["accent"], fg="white",
+            activebackground=COLORS["accent_hover"], activeforeground="white",
+            relief="flat", borderwidth=0, padx=14, pady=6, cursor="hand2",
+        ).pack(side="left", padx=(0, 8))
+
+        tk.Button(
+            btn_frame, text="✕  Exit App",
+            command=lambda: (dlg.destroy(), self._exit_app()),
+            font=("Segoe UI", 9, "bold"), bg=COLORS["button_bg"], fg=COLORS["text_primary"],
+            activebackground=COLORS["button_hover"], activeforeground=COLORS["text_primary"],
+            relief="flat", borderwidth=0, padx=14, pady=6, cursor="hand2",
+        ).pack(side="left")
+
+    def _minimize_to_tray(self):
+        """Hide the main window and show a system tray icon."""
+        if not _HAS_TRAY:
+            # If pystray is not available, just iconify
+            self.root.withdraw()
+            return
+
+        self.root.withdraw()
+
+        try:
+            icon_image = Image.open(ICON_PATH)
+        except Exception:
+            # Fallback: create a simple colored square
+            icon_image = Image.new("RGB", (64, 64), "#e94560")
+
+        menu = pystray.Menu(
+            pystray.MenuItem("Restore", self._restore_from_tray, default=True),
+            pystray.MenuItem("Exit", self._tray_exit),
+        )
+
+        self._tray_icon = pystray.Icon("SlickClick", icon_image, "SlickClick", menu)
+        threading.Thread(target=self._tray_icon.run, daemon=True).start()
+
+    def _restore_from_tray(self, icon=None, item=None):
+        """Restore the main window from the system tray."""
+        if hasattr(self, '_tray_icon') and self._tray_icon:
+            self._tray_icon.stop()
+            self._tray_icon = None
+        self.root.after(0, self._show_window)
+
+    def _show_window(self):
+        """Show and focus the main window."""
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
+
+    def _tray_exit(self, icon=None, item=None):
+        """Exit the app from the tray icon menu."""
+        if hasattr(self, '_tray_icon') and self._tray_icon:
+            self._tray_icon.stop()
+            self._tray_icon = None
+        self.root.after(0, self._exit_app)
+
+    def _exit_app(self):
+        """Fully exit the application."""
         self._save_settings()
         self.engine.stop()
         self.hotkey.stop()

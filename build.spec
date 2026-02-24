@@ -10,13 +10,14 @@ from PyInstaller.utils.hooks import collect_all
 # Collect all submodules/data for packages that have platform-specific backends
 pyautogui_datas, pyautogui_binaries, pyautogui_hiddenimports = collect_all('pyautogui')
 pynput_datas, pynput_binaries, pynput_hiddenimports = collect_all('pynput')
+pystray_datas, pystray_binaries, pystray_hiddenimports = collect_all('pystray')
 
 a = Analysis(
     ['run.py'],
     pathex=[],
-    binaries=pyautogui_binaries + pynput_binaries,
-    datas=[('assets/icon.ico', 'assets')] + pyautogui_datas + pynput_datas,
-    hiddenimports=pyautogui_hiddenimports + pynput_hiddenimports,
+    binaries=pyautogui_binaries + pynput_binaries + pystray_binaries,
+    datas=[('assets/icon.ico', 'assets')] + pyautogui_datas + pynput_datas + pystray_datas,
+    hiddenimports=pyautogui_hiddenimports + pynput_hiddenimports + pystray_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
