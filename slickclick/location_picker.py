@@ -2,6 +2,7 @@
 
 import tkinter as tk
 import pyautogui
+from pynput import mouse as pynput_mouse
 
 from .constants import COLORS, ICON_PATH
 
@@ -18,10 +19,9 @@ class LocationPicker:
     """
     Floating toolbar approach for picking screen coordinates.
 
-    Instead of a fragile fullscreen overlay, this shows a small always-on-top
-    instruction bar. The user moves their mouse to the desired position and
-    presses Space/Enter to capture the coordinates. Works reliably on all
-    Windows versions.
+    Shows a small always-on-top instruction bar while a global mouse listener
+    captures left-click positions anywhere on screen. Clicks on the toolbar
+    itself are ignored so the user can still drag or close it.
     """
 
     def __init__(self, parent, on_location_picked):
@@ -33,6 +33,7 @@ class LocationPicker:
         self._coord_label = None
         self._count_label = None
         self._polling_id = None
+        self._mouse_listener = None
 
     def show(self, existing_locations: list[tuple[int, int]] | None = None):
         """Open the picker toolbar."""
@@ -92,7 +93,7 @@ class LocationPicker:
         # Instructions
         tk.Label(
             body,
-            text="Move mouse to target → press Space to capture",
+            text="Click anywhere on screen to capture a location",
             font=("Segoe UI", 10, "bold"),
             fg=COLORS["text_primary"], bg=COLORS["bg_card"],
         ).pack(pady=(8, 2))
@@ -127,9 +128,7 @@ class LocationPicker:
             fg=COLORS["text_muted"], bg=COLORS["bg_card"],
         ).pack(pady=(0, 6))
 
-        # Bind keyboard events
-        self._toolbar.bind("<space>", self._on_capture)
-        self._toolbar.bind("<Return>", self._on_capture)
+        # Bind keyboard events (Escape to close, Ctrl+Z to undo)
         self._toolbar.bind("<Escape>", lambda e: self._close())
         self._toolbar.bind("<Control-z>", self._on_undo)
 
@@ -145,6 +144,10 @@ class LocationPicker:
 
         # Start polling mouse position
         self._poll_mouse()
+
+        # Start global mouse listener for click-based capture
+        self._mouse_listener = pynput_mouse.Listener(on_click=self._on_mouse_click)
+        self._mouse_listener.start()
 
     # ------------------------------------------------------------------
     # Mouse position polling
@@ -165,11 +168,31 @@ class LocationPicker:
     # Event handlers
     # ------------------------------------------------------------------
 
-    def _on_capture(self, event):
-        """Capture the current mouse position."""
+    def _on_mouse_click(self, x, y, button, pressed):
+        """Global mouse click handler from pynput listener."""
+        # Only capture on left-click press (not release)
+        if button != pynput_mouse.Button.left or not pressed:
+            return
+        if self._toolbar is None:
+            return
+
+        # Ignore clicks on the toolbar itself so close/drag still work
         try:
-            x, y = pyautogui.position()
+            tb_x = self._toolbar.winfo_rootx()
+            tb_y = self._toolbar.winfo_rooty()
+            tb_w = self._toolbar.winfo_width()
+            tb_h = self._toolbar.winfo_height()
+            if tb_x <= x <= tb_x + tb_w and tb_y <= y <= tb_y + tb_h:
+                return
         except Exception:
+            return
+
+        # Schedule the capture on the tkinter main thread
+        self._toolbar.after(0, self._capture_location, int(x), int(y))
+
+    def _capture_location(self, x, y):
+        """Capture the given screen position (called on tkinter thread)."""
+        if self._toolbar is None:
             return
 
         self._pick_count += 1
@@ -187,6 +210,10 @@ class LocationPicker:
 
         # Show a brief dot at the captured position
         self._show_capture_dot(x, y, self._pick_count)
+
+        # Re-focus the toolbar so Escape/Ctrl+Z still work
+        self._toolbar.lift()
+        self._toolbar.focus_force()
 
     def _on_undo(self, event):
         """Signal undo — remove last captured location."""
@@ -252,6 +279,13 @@ class LocationPicker:
     # ------------------------------------------------------------------
 
     def _close(self):
+        # Stop the global mouse listener
+        if self._mouse_listener:
+            try:
+                self._mouse_listener.stop()
+            except Exception:
+                pass
+            self._mouse_listener = None
         if self._polling_id:
             try:
                 self._toolbar.after_cancel(self._polling_id)

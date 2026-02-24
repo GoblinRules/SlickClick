@@ -43,7 +43,7 @@ python -m slickclick.main
 
 Pre-built binaries are available on the [Releases](https://github.com/GoblinRules/SlickClick/releases) page:
 
-- **SlickClick_Setup_v1.2.3.exe** — Windows installer
+- **SlickClick_Setup_v1.3.0.exe** — Windows installer
 - **SlickClick.exe** — Portable executable (no install needed)
 
 ## Usage
@@ -81,7 +81,7 @@ python -m PyInstaller build.spec --noconfirm
 2. Build the .exe first with PyInstaller (above)
 3. Open `installer.iss` in Inno Setup Compiler
 4. Click **Build → Compile**
-5. Output: `installer_output/SlickClick_Setup_v1.2.2.exe`
+5. Output: `installer_output/SlickClick_Setup_v1.3.0.exe`
 
 ## Tech Stack
 
