@@ -21,6 +21,7 @@ DEFAULTS = {
     "repeat_count": 50,
     "show_toast": True,
     "show_osd": True,
+    "start_delay_secs": 0,
 }
 
 

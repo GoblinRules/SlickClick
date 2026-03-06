@@ -4,7 +4,7 @@ import os
 import sys
 
 APP_NAME = "SlickClick"
-APP_VERSION = "1.3.1"
+APP_VERSION = "1.3.2"
 
 
 def resource_path(relative_path: str) -> str:

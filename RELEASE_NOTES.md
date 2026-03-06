@@ -1,22 +1,20 @@
-# SlickClick v1.3.1 🚀
+# SlickClick v1.3.2 🚀
 
-**System tray support & About dialog polish.**
+**Resolution-aware resizable window & configurable start delay.**
 
 ---
 
 ## ✨ New Features
 
-- **Minimize to System Tray** — Pressing the X button now shows a prompt asking "Minimize to Tray" or "Exit App". Minimizing hides the window and places a SlickClick icon in the system tray with Restore and Exit options.
-
-## 🐛 Fixes
-
-- **About dialog closes on download click** — Clicking "click to download" in the About → Check for Updates dialog now opens the browser and closes the About window automatically.
+- **Resolution-Aware Window** — The main window now enables Per-Monitor DPI awareness so it renders crisply on high-DPI / scaled displays (125%, 150%, 200%, etc.).
+- **Resizable Window** — The main window can now be freely resized by dragging edges or corners. Default size scales based on your screen resolution.
+- **Start Delay** — New "Start Delay" spinner on the main screen lets you set a delay (0–60 seconds) before clicking begins. A visual countdown is shown in the status bar, and pressing the hotkey again during the countdown cancels it.
 
 ## 📦 Downloads
 
 | File | Description |
 |---|---|
-| `SlickClick_Setup_v1.3.1.exe` | Windows installer |
+| `SlickClick_Setup_v1.3.2.exe` | Windows installer |
 | `SlickClick.exe` | Portable executable (no install needed) |
 
 ### System Requirements
@@ -25,4 +23,4 @@
 
 ---
 
-**Full Changelog:** https://github.com/GoblinRules/SlickClick/compare/V1.3.0...V1.3.1
+**Full Changelog:** https://github.com/GoblinRules/SlickClick/compare/V1.3.1...V1.3.2

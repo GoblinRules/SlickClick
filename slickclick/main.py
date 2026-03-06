@@ -2,6 +2,7 @@
 
 import tkinter as tk
 import sys
+import ctypes
 import threading
 
 from .logging_config import logger
@@ -25,6 +26,12 @@ class SlickClickApp:
     """Application controller — connects all components."""
 
     def __init__(self):
+        # Enable Per-Monitor DPI awareness (Windows 10 1607+)
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:
+            pass
+
         self.root = tk.Tk()
         self.gui = SlickClickGUI(self.root)
         self.engine = ClickerEngine()
@@ -67,16 +74,44 @@ class SlickClickApp:
 
     def _toggle_clicking(self):
         """Start or stop the clicker (called from hotkey or button)."""
+        # If a countdown is in progress, cancel it
+        if hasattr(self, '_countdown_id') and self._countdown_id is not None:
+            self.root.after_cancel(self._countdown_id)
+            self._countdown_id = None
+            self.gui.update_status(False)
+            return
+
         if self.engine.running:
             self.engine.stop()
         else:
-            self.engine.start(
-                locations=self.gui.get_locations(),
-                interval_ms=self.gui.get_interval_ms(),
-                repeat_count=self.gui.get_repeat_count(),
-                mouse_button=self.gui.get_mouse_button(),
-                click_type=self.gui.get_click_type(),
-            )
+            delay = self.gui.get_start_delay_secs()
+            if delay > 0:
+                self._start_countdown(delay)
+            else:
+                self._do_start()
+
+    def _start_countdown(self, remaining: int):
+        """Run a second-by-second countdown before starting the clicker."""
+        if remaining <= 0:
+            self._countdown_id = None
+            self._do_start()
+            return
+        self.gui.status_label.configure(
+            text=f"● Starting in {remaining}…", fg=COLORS["warning"],
+        )
+        self._countdown_id = self.root.after(
+            1000, self._start_countdown, remaining - 1,
+        )
+
+    def _do_start(self):
+        """Actually start the clicker engine."""
+        self.engine.start(
+            locations=self.gui.get_locations(),
+            interval_ms=self.gui.get_interval_ms(),
+            repeat_count=self.gui.get_repeat_count(),
+            mouse_button=self.gui.get_mouse_button(),
+            click_type=self.gui.get_click_type(),
+        )
 
     def _open_picker(self):
         """Open the floating location picker toolbar."""
@@ -315,6 +350,9 @@ class SlickClickApp:
         self.gui.show_toast.set(cfg.get("show_toast", True))
         self.gui.show_osd.set(cfg.get("show_osd", True))
 
+        # Start delay
+        self.gui.start_delay_var.set(str(cfg.get("start_delay_secs", 0)))
+
     def _save_settings(self):
         """Gather current state from GUI and save."""
         try:
@@ -330,6 +368,7 @@ class SlickClickApp:
                 "repeat_count": int(self.gui.repeat_count_var.get() or 50),
                 "show_toast": self.gui.show_toast.get(),
                 "show_osd": self.gui.show_osd.get(),
+                "start_delay_secs": self.gui.get_start_delay_secs(),
             }
             config.save(cfg)
         except Exception:

@@ -34,6 +34,7 @@ class SlickClickGUI:
         self.secs_var = tk.StringVar(value="0")
         self.ms_var = tk.StringVar(value=str(DEFAULT_INTERVAL_MS))
         self.target_mode = tk.StringVar(value="cursor")
+        self.start_delay_var = tk.StringVar(value="0")
         self._locations: list[tuple[int, int]] = []
         self._hotkey_name = DEFAULT_HOTKEY
         self.show_toast = tk.BooleanVar(value=True)
@@ -52,9 +53,19 @@ class SlickClickGUI:
 
     def _setup_window(self):
         self.root.title(f"{APP_NAME} v{APP_VERSION}")
-        self.root.geometry("460x520")
-        self.root.minsize(420, 490)
-        self.root.resizable(False, False)
+
+        # Scale default size based on screen resolution (460x520 base at 1080p)
+        screen_w = self.root.winfo_screenwidth()
+        screen_h = self.root.winfo_screenheight()
+        scale = min(screen_w / 1920, screen_h / 1080)
+        w = max(460, int(460 * scale))
+        h = max(540, int(540 * scale))
+        x = (screen_w - w) // 2
+        y = (screen_h - h) // 2
+        self.root.geometry(f"{w}x{h}+{x}+{y}")
+
+        self.root.minsize(420, 510)
+        self.root.resizable(True, True)
         self.root.configure(bg=COLORS["bg_dark"])
         try:
             self.root.iconbitmap(ICON_PATH)
@@ -309,6 +320,34 @@ class SlickClickGUI:
         )
         self.hotkey_badge.pack(fill="x", padx=1, pady=1)
         self.hotkey_badge.bind("<Button-1>", lambda e: self._on_set_hotkey())
+
+        # ── Start Delay ───────────────────────────────────────
+        delay_row = tk.Frame(card, bg=COLORS["bg_card"])
+        delay_row.pack(fill="x", padx=pad_x, pady=(0, 14))
+
+        self._make_section_label(delay_row, "START DELAY", 0, (0, 4))
+
+        delay_inner = tk.Frame(delay_row, bg=COLORS["bg_card"])
+        delay_inner.pack(fill="x")
+
+        delay_border = tk.Frame(delay_inner, bg=COLORS["border"])
+        delay_border.pack(side="left")
+
+        self.delay_spin = tk.Spinbox(
+            delay_border, from_=0, to=60, width=4,
+            textvariable=self.start_delay_var,
+            font=("Segoe UI", 13, "bold"), justify="center",
+            bg=COLORS["input_bg"], fg=COLORS["text_primary"],
+            buttonbackground=COLORS["button_bg"],
+            insertbackground=COLORS["text_primary"],
+            relief="flat", borderwidth=0, highlightthickness=0,
+        )
+        self.delay_spin.pack(padx=2, pady=2)
+
+        tk.Label(
+            delay_inner, text="seconds", font=("Segoe UI", 9),
+            fg=COLORS["text_muted"], bg=COLORS["bg_card"],
+        ).pack(side="left", padx=(8, 0))
 
         # ── Status bar ────────────────────────────────────────
         status_frame = tk.Frame(card, bg=COLORS["bg_medium"])
@@ -855,6 +894,12 @@ class SlickClickGUI:
 
     def get_click_type(self) -> str:
         return self.type_var.get()
+
+    def get_start_delay_secs(self) -> int:
+        try:
+            return max(0, int(self.start_delay_var.get()))
+        except ValueError:
+            return 0
 
     # ------------------------------------------------------------------
     # Location management

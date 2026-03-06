@@ -29,6 +29,9 @@
 - 🔄 **Check for updates** — one-click update check via GitHub Releases API
 - 📖 **Built-in help guide** — scrollable guide accessible from the app menu
 - 💾 **Persistent settings** — all settings saved automatically between sessions
+- 📐 **Resolution-aware** — Per-Monitor DPI awareness for crisp rendering on high-DPI displays
+- ↔️ **Resizable window** — freely resize the main window; default size scales to your screen resolution
+- ⏳ **Start delay** — configurable delay (0–60 seconds) with visual countdown before clicking begins
 - 🌙 **Dark theme** — modern interface with accent-colored dialog banners
 
 ## Quick Start
@@ -43,7 +46,7 @@ python -m slickclick.main
 
 Pre-built binaries are available on the [Releases](https://github.com/GoblinRules/SlickClick/releases) page:
 
-- **SlickClick_Setup_v1.3.1.exe** — Windows installer
+- **SlickClick_Setup_v1.3.2.exe** — Windows installer
 - **SlickClick.exe** — Portable executable (no install needed)
 
 ## Usage
@@ -81,7 +84,7 @@ python -m PyInstaller build.spec --noconfirm
 2. Build the .exe first with PyInstaller (above)
 3. Open `installer.iss` in Inno Setup Compiler
 4. Click **Build → Compile**
-5. Output: `installer_output/SlickClick_Setup_v1.3.1.exe`
+5. Output: `installer_output/SlickClick_Setup_v1.3.2.exe`
 
 ## Tech Stack
 
